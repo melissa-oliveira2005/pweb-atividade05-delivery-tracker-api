@@ -41,7 +41,7 @@ Também foi aplicada injeção de dependência manual.
 
 ---
 
-## 📦 Funcionalidades
+## Funcionalidades
 
 - Cadastro de entregas
 - Controle de status:
@@ -55,7 +55,7 @@ Também foi aplicada injeção de dependência manual.
 
 ---
 
-## ⚙️ Regras de Negócio
+## Regras de Negócio
 
 - Origem e destino não podem ser iguais
 - Status inicial é CRIADA
@@ -70,7 +70,7 @@ Também foi aplicada injeção de dependência manual.
 
 ---
 
-## 🔗 Rotas da API
+## Rotas da API
 
 | Método | Rota | Descrição |
 |------|------|--------|
@@ -83,7 +83,7 @@ Também foi aplicada injeção de dependência manual.
 
 ---
 
-## ▶️ Como Executar
+## Como Executar
 
 ### 1. Instalar dependências
 
@@ -111,7 +111,7 @@ Servidor disponível em:
 
 ---
 
-## 🧪 Testes
+## Testes
 
 Os testes podem ser realizados de três formas:
 
