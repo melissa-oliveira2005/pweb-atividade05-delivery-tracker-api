@@ -1,14 +1,13 @@
 // src/routes/entregasRoutes.js
 import express from "express";
-import { Database } from "../database/database.js";
-import { EntregasRepository } from "../repositories/EntregasRepository.js";
+import { database } from "../database/databaseInstance.js";
+import { EntregasRepository } from "../repositories/inMemory/EntregasRepository.js";
 import { EntregasService } from "../services/EntregasService.js";
 import { EntregasController } from "../controllers/EntregasController.js";
 
 const router = express.Router();
 
 // Injeção de dependência
-const database = new Database();
 const repository = new EntregasRepository(database);
 const service = new EntregasService(repository);
 const controller = new EntregasController(service);

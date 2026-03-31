@@ -1,0 +1,8 @@
+POST http://localhost:3000/api/motoristas
+Content-Type: application/json
+
+{
+  "nome": "João",
+  "cpf": "12345678900",
+  "placaVeiculo": "ABC-1234"
+}

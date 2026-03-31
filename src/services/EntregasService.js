@@ -1,19 +1,16 @@
-// src/services/EntregasService.js
-
 export class EntregasService {
-  constructor(repository) {
-    this.repository = repository;
+  constructor(entregasRepository, motoristasRepository) {
+    this.entregasRepository = entregasRepository;
+    this.motoristasRepository = motoristasRepository;
   }
 
   criarEntrega({ descricao, origem, destino }) {
-    // Regra: origem != destino
     if (origem === destino) {
       throw new Error("Origem e destino não podem ser iguais");
     }
 
-    const entregas = this.repository.listarTodos();
+    const entregas = this.entregasRepository.listarTodos();
 
-    // Regra: evitar duplicidade ativa
     const duplicada = entregas.find(e =>
       e.descricao === descricao &&
       e.origem === origem &&
@@ -30,6 +27,7 @@ export class EntregasService {
       origem,
       destino,
       status: "CRIADA",
+      motoristaId: null, // 👈 NOVO CAMPO
       historico: [
         {
           data: new Date().toISOString(),
@@ -38,21 +36,25 @@ export class EntregasService {
       ]
     };
 
-    return this.repository.criar(novaEntrega);
+    return this.entregasRepository.criar(novaEntrega);
   }
 
-  listar(status) {
-    const entregas = this.repository.listarTodos();
+  listar(status, motoristaId) {
+    let entregas = this.entregasRepository.listarTodos();
 
     if (status) {
-      return entregas.filter(e => e.status === status);
+      entregas = entregas.filter(e => e.status === status);
+    }
+
+    if (motoristaId) {
+      entregas = entregas.filter(e => e.motoristaId === motoristaId);
     }
 
     return entregas;
   }
 
   buscarPorId(id) {
-    const entrega = this.repository.buscarPorId(id);
+    const entrega = this.entregasRepository.buscarPorId(id);
 
     if (!entrega) {
       throw new Error("Entrega não encontrada");
@@ -61,15 +63,48 @@ export class EntregasService {
     return entrega;
   }
 
+  // 🚀 NOVO MÉTODO (RF-02)
+  atribuirMotorista(entregaId, motoristaId) {
+    const entrega = this.buscarPorId(entregaId);
+
+    // Regra: só pode atribuir se estiver CRIADA
+    if (entrega.status !== "CRIADA") {
+      const erro = new Error("Só é possível atribuir motorista a entregas CRIADAS");
+      erro.status = 422;
+      throw erro;
+    }
+
+    const motorista = this.motoristasRepository.buscarPorId(motoristaId);
+
+    if (!motorista) {
+      throw new Error("Motorista não encontrado");
+    }
+
+    // Regra: motorista precisa estar ATIVO
+    if (motorista.status === "INATIVO") {
+      const erro = new Error("Motorista está inativo");
+      erro.status = 422;
+      throw erro;
+    }
+
+    // Histórico (substituição também entra aqui)
+    this._addHistorico(
+      entrega,
+      `Motorista ${motoristaId} atribuído à entrega`
+    );
+
+    entrega.motoristaId = motoristaId;
+
+    return this.entregasRepository.atualizar(entregaId, entrega);
+  }
+
   avancarStatus(id) {
     const entrega = this.buscarPorId(id);
 
-    // Regra: não pode avançar se já finalizada ou cancelada
     if (["ENTREGUE", "CANCELADA"].includes(entrega.status)) {
       throw new Error("Não é possível avançar o status dessa entrega");
     }
 
-    // Definição explícita de transições válidas
     const transicoes = {
       CRIADA: "EM_TRANSITO",
       EM_TRANSITO: "ENTREGUE"
@@ -81,7 +116,6 @@ export class EntregasService {
       throw new Error("Transição de status inválida");
     }
 
-    // Regra: não pode ir direto para ENTREGUE sem passar por EM_TRANSITO
     if (proximoStatus === "ENTREGUE") {
       const passouPorTransito = entrega.historico.some(h =>
         h.descricao.includes("EM_TRANSITO")
@@ -92,22 +126,19 @@ export class EntregasService {
       }
     }
 
-    // Atualiza status
     entrega.status = proximoStatus;
 
-    // Histórico
     this._addHistorico(
       entrega,
       `Status alterado para ${proximoStatus}`
     );
 
-    return this.repository.atualizar(id, entrega);
+    return this.entregasRepository.atualizar(id, entrega);
   }
 
   cancelar(id) {
     const entrega = this.buscarPorId(id);
 
-    // Regra: não pode cancelar se já ENTREGUE ou CANCELADA
     if (["ENTREGUE", "CANCELADA"].includes(entrega.status)) {
       throw new Error("Não é possível cancelar essa entrega");
     }
@@ -116,12 +147,25 @@ export class EntregasService {
 
     this._addHistorico(entrega, "Entrega cancelada");
 
-    return this.repository.atualizar(id, entrega);
+    return this.entregasRepository.atualizar(id, entrega);
   }
 
   historico(id) {
     const entrega = this.buscarPorId(id);
     return entrega.historico;
+  }
+
+  // 🚀 NOVO (RF-03)
+  listarPorMotorista(motoristaId, status) {
+    let entregas = this.entregasRepository.listarTodos();
+
+    entregas = entregas.filter(e => e.motoristaId === motoristaId);
+
+    if (status) {
+      entregas = entregas.filter(e => e.status === status);
+    }
+
+    return entregas;
   }
 
   _addHistorico(entrega, descricao) {

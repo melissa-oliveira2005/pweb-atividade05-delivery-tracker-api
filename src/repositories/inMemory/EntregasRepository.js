@@ -1,4 +1,3 @@
-// src/repositories/EntregasRepository.js
 export class EntregasRepository {
   constructor(database) {
     this.database = database;
@@ -9,14 +8,16 @@ export class EntregasRepository {
   }
 
   buscarPorId(id) {
-    return this.database.getEntregas().find(e => e.id === id);
+    return this.database.getEntregas().find(e => e.id === id) || null;
   }
 
   criar(dados) {
     const nova = {
       id: this.database.generateId(),
+      motoristaId: null,
       ...dados
     };
+
     this.database.getEntregas().push(nova);
     return nova;
   }
