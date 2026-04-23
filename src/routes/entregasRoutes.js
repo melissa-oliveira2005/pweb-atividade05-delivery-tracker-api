@@ -2,14 +2,17 @@
 import express from "express";
 import { database } from "../database/databaseInstance.js";
 import { EntregasRepository } from "../repositories/inMemory/EntregasRepository.js";
+import { MotoristasRepository } from "../repositories/MotoristasRepository.js";
 import { EntregasService } from "../services/EntregasService.js";
 import { EntregasController } from "../controllers/EntregasController.js";
 
 const router = express.Router();
 
 // Injeção de dependência
-const repository = new EntregasRepository(database);
-const service = new EntregasService(repository);
+const entregasrepository = new EntregasRepository(database);
+const motoristasrepository = new MotoristasRepository(database);
+const service = new EntregasService(entregasRepository, motoristasRepository);
+
 const controller = new EntregasController(service);
 
 // Rotas

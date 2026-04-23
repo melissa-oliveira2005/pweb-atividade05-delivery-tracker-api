@@ -157,15 +157,17 @@ export class EntregasService {
 
   // 🚀 NOVO (RF-03)
   listarPorMotorista(motoristaId, status) {
-    let entregas = this.entregasRepository.listarTodos();
+    const motorista = this.motoristasRepository.buscarPorId(motoristaId);
+    if (!motorista) throw new Error("Motorista não encontrado");
 
-    entregas = entregas.filter(e => e.motoristaId === motoristaId);
-
+    let entregas = this.entregasRepository.listarTodos().filter(e => e.motoristaId === motoristaId);
     if (status) {
       entregas = entregas.filter(e => e.status === status);
-    }
+    };
 
-    return entregas;
+    return this.entregasRepository
+    .listar()
+    .filter(e => e.motoristaId === motoristaId);
   }
 
   _addHistorico(entrega, descricao) {

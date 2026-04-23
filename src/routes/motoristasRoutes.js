@@ -49,4 +49,4 @@ router.get(
   controller.listarEntregas
 );
 
-export default router;
+export { router as motoristasRoutes };

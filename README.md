@@ -3,6 +3,11 @@
 API REST para rastreamento de entregas entre cidades, desenvolvida como atividade da disciplina de Programação Web II (PWEB2).
 
 ---
+## 🎯 Objetivo
+
+Implementar persistência real utilizando PostgreSQL e SQL puro, substituindo o armazenamento em memória da versão anterior, mantendo a arquitetura existente (sem alterar services).
+
+---
 
 ## Tecnologias Utilizadas
 
@@ -18,11 +23,27 @@ API REST para rastreamento de entregas entre cidades, desenvolvida como atividad
 
 src/
 ├── controllers/
+  ├── EntregasController.js.js
+  └── MotoristasController.js
 ├── services/
+  ├── EntregasService.js
+  └── MotoristasService.js
 ├── repositories/
+    ├── inMemory/
+      ├── EntregasRepository.js
+      └── MotoristasRepository.js
+    ├── interfaces/
+      ├── IEntregasRepository.js
+      └── IMotoristasRepository.js
 ├── database/
+  ├── database.js
+  └── databaseInstance.js
 ├── routes/
-├── utils/
+  ├── entregasRoutes.js
+  └── motoristasRoutes.js
+└── utils/
+  └── erros.js
+
 
 ```
 
@@ -38,6 +59,7 @@ O projeto segue o padrão de arquitetura em camadas:
 - Database → Persistência em memória
 
 Também foi aplicada injeção de dependência manual.
+Os services dependem apenas de contratos (interfaces), permitindo troca de implementação sem impacto.
 
 ---
 
@@ -83,6 +105,21 @@ Também foi aplicada injeção de dependência manual.
 
 ---
 
+## 🗄️ Banco de Dados
+✔ Modelagem
+
+O banco possui as seguintes tabelas:
+
+motoristas
+entregas
+eventos_entrega
+🔹 Regras implementadas
+Integridade referencial com FOREIGN KEY
+ON DELETE CASCADE em eventos_entrega
+Controle de status com CHECK CONSTRAINT
+Campos obrigatórios com NOT NULL
+CPF com UNIQUE
+
 ## Como Executar
 
 ### 1. Instalar dependências
@@ -126,6 +163,21 @@ Os testes podem ser realizados de três formas:
 node test.js
 
 ```
+---
+## ⚙️ Configuração
+1. Variáveis de ambiente
+
+Criar arquivo .env:
+
+DATABASE_URL=postgresql://usuario:500207@localhost:5432/delivery_tracker
+2. Criar banco
+CREATE DATABASE delivery_tracker;
+3. Executar migration
+psql -U postgres -d delivery_tracker -f migration.sql
+4. Instalar dependências
+npm install
+▶️ 5. Executar aplicação
+npm run dev
 
 ---
 
@@ -160,7 +212,74 @@ POST /api/entregas
 * Filtro por status
 
 ---
+## 📡 Endpoints
+  🔹 Motoristas
+      Método	Rota	Descrição
+      POST	/api/motoristas	Criar motorista
+      GET	/api/motoristas	Listar motoristas
+  🔹 Entregas
+      Método	Rota	Descrição
+      POST	/api/entregas	Criar entrega
+      GET	/api/entregas/:id	Buscar por ID
 
+## 📊 Relatórios
+✔ Entregas por status
+GET /api/relatorios/entregas-por-status
+
+Retorno:
+
+{
+  "CRIADA": 5,
+  "EM_TRANSITO": 3,
+  "ENTREGUE": 12,
+  "CANCELADA": 2
+}
+✔ Motoristas ativos
+GET /api/relatorios/motoristas-ativos
+
+Retorno:
+
+[
+  {
+    "motoristaId": 1,
+    "nome": "João",
+    "entregasEmAberto": 2
+  }
+]
+
+## 🧠 Decisões Técnicas
+Uso de SQL puro para aprendizado de queries
+Utilização de pg.Pool para gerenciamento de conexões
+Tratamento de erros de banco no repository
+Manutenção dos services intactos (restrição da atividade)
+
+## ⚠️ Tratamento de Erros
+CPF duplicado → erro de domínio
+Registro não encontrado → retorno null
+Erros de banco não são expostos diretamente
+
+## 🧪 Cenários Validados
+Persistência após reinicialização do servidor
+Inserção e consulta de dados no banco
+Violação de UNIQUE (CPF) tratada corretamente
+Relatórios com GROUP BY e JOIN funcionando
+
+## 📌 Requisitos Atendidos
+Requisito	Status
+Modelagem relacional	✅
+Migration manual	✅
+Uso de pg.Pool	✅
+Repositories reimplementados	✅
+Services não alterados	✅
+Tratamento de erros	✅
+Queries com JOIN e GROUP BY	✅
+
+---
+💡 Observação
+
+O projeto foi estruturado mantendo separação clara entre camadas, permitindo futura substituição de SQL puro por ORM sem impacto nos services.
+
+---
 ## Autora
 
 Melissa Carolyne Alves de Oliveira
